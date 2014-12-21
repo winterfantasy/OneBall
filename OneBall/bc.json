@@ -1,0 +1,8 @@
+{
+     "name": "bc",
+     "dependence": ["core"],
+     "source":"src",
+     "file_list": [
+	 "bc.d.ts"
+     ]
+}

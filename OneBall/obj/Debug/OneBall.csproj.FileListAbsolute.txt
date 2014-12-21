@@ -1,0 +1,6 @@
+D:\game\OneBall\OneBall\bin\OneBall.dll.config
+D:\game\OneBall\OneBall\bin\OneBall.dll
+D:\game\OneBall\OneBall\bin\OneBall.pdb
+D:\game\OneBall\OneBall\obj\Debug\OneBall.dll
+D:\game\OneBall\OneBall\obj\Debug\OneBall.pdb
+D:\game\OneBall\OneBall\obj\Debug\OneBall.csprojResolveAssemblyReference.cache

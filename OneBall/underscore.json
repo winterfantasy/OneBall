@@ -1,0 +1,9 @@
+{
+     "name": "underscore",
+     "dependence": ["core"],
+     "source":"src",
+     "file_list": [
+	 "underscore.js",
+	 "underscore.d.ts"
+     ]
+}
