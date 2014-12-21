@@ -49,4 +49,4 @@ var LoadingUI = (function (_super) {
     };
     return LoadingUI;
 })(egret.Sprite);
-//# sourceMappingURL=LoadingUI.js.map
+LoadingUI.prototype.__class__ = "LoadingUI";

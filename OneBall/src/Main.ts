@@ -25,10 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 var sensorTag: BC.Device;
+var ball: egret.Bitmap;
 
 function changeTog(data) {
     var raw = new Int8Array(data);
     return raw[0] / 64;
+}
+
+function _fix_pos(pos, min, max) {
+    var ret = pos;
+    if (pos < min)
+        ret = min;
+    else if (pos > max)
+        ret = max;
+    return ret;
 }
 
 class Main extends egret.DisplayObjectContainer{
@@ -38,71 +48,6 @@ class Main extends egret.DisplayObjectContainer{
     public constructor() {
         super();
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
-        document.addEventListener('bcready', this.onBCReady, false);
-    }
-
-    private onBCReady() {
-        /*var names = ["a", "b"];
-        _.each(names, function (name) {
-            alert(name);
-        });*/
-        BC.bluetooth.addEventListener("bluetoothstatechange", function() {
-            if (BC.bluetooth.isopen) {
-                alert("your bluetooth has been opened successfully.");
-            } else {
-                alert("bluetooth is closed!");
-                BC.Bluetooth.OpenBluetooth(function () { alert("opened!"); });
-            }
-        });
-        BC.bluetooth.addEventListener("newdevice", function(arg) {
-            var newDevice: BC.Device = arg.target;
-            newDevice.addEventListener("devicedisconnected", function (arg) {
-                alert("SensorTag:" + arg.deviceAddress + " is disconnect,Click to reconnect.");
-                newDevice.connect(function (arg) {
-                    alert("SensorTag:" + arg.deviceAddress + " is reconnected successfully.");
-                }, function () {
-                        newDevice.dispatchEvent("devicedisconnected");
-                });
-            });
-            if (newDevice.deviceAddress == "BC:6A:29:AB:7C:DE") {
-                sensorTag = newDevice;
-                newDevice.connect(function() {
-                    sensorTag.prepare(function () {
-                        var beginNotifyChar = sensorTag.services[4].characteristics[0];
-                        var enableChar = sensorTag.services[4].characteristics[1];
-                        var frequencyChar = sensorTag.services[4].characteristics[2];
-
-                        enableChar.write("Hex", "01", function () {
-                            frequencyChar.write("Hex", "0a", function () {
-                                beginNotifyChar.subscribe(function (data) {
-                                    var x = changeTog(data.value.value.slice(0, 1));
-                                    var y = changeTog(data.value.value.slice(1, 2));
-                                    var z = changeTog(data.value.value.slice(2, 3));
-                                    z = -z;
-                                    console.log("x:" + x + " y:" + y + " z:" + z);
-                                });
-                            }, function () {
-                                    alert("write to enable char error");
-                                });
-                        }, function () {
-                                alert("write to enable char error");
-                            });
-                    }, function () {
-                            alert("read SensorTag ATT table error!");
-                    });
-                }, function () {
-                    alert("connect the SensorTag BC:6A:29:AB:7C:DE error");
-                });
-            }
-        });
-
-        if (!BC.bluetooth.isopen) {
-            BC.Bluetooth.OpenBluetooth(function () {
-                BC.Bluetooth.StartScan("LE");
-            });
-        } else {
-            BC.Bluetooth.StartScan("LE");
-        }
     }
 
     private onAddToStage(event:egret.Event){
@@ -127,6 +72,77 @@ class Main extends egret.DisplayObjectContainer{
             RES.removeEventListener(RES.ResourceEvent.GROUP_PROGRESS,this.onResourceProgress,this);
             this.createGameScene();
         }
+
+        var stageX = this.stage.stageWidth;
+        var stageY = this.stage.stageHeight;
+        document.addEventListener('bcready', function () {
+            /*var names = ["a", "b"];
+            _.each(names, function (name) {
+                alert(name);
+            });*/
+            BC.bluetooth.addEventListener("bluetoothstatechange", function () {
+                if (BC.bluetooth.isopen) {
+                    alert("your bluetooth has been opened successfully.");
+                } else {
+                    alert("bluetooth is closed!");
+                    BC.Bluetooth.OpenBluetooth(function () { alert("opened!"); });
+                }
+            });
+            BC.bluetooth.addEventListener("newdevice", function (arg) {
+                var newDevice: BC.Device = arg.target;
+                newDevice.addEventListener("devicedisconnected", function (arg) {
+                    alert("SensorTag:" + arg.deviceAddress + " is disconnect,Click to reconnect.");
+                    newDevice.connect(function (arg) {
+                        alert("SensorTag:" + arg.deviceAddress + " is reconnected successfully.");
+                    }, function () {
+                            newDevice.dispatchEvent("devicedisconnected");
+                        });
+                });
+                if (newDevice.deviceAddress == "BC:6A:29:AB:7C:DE") {
+                    sensorTag = newDevice;
+                    newDevice.connect(function () {
+                        sensorTag.prepare(function () {
+                            var beginNotifyChar = sensorTag.services[4].characteristics[0];
+                            var enableChar = sensorTag.services[4].characteristics[1];
+                            var frequencyChar = sensorTag.services[4].characteristics[2];
+
+                            enableChar.write("Hex", "01", function () {
+                                frequencyChar.write("Hex", "0a", function () {
+                                    beginNotifyChar.subscribe(function (data) {
+                                        var x = changeTog(data.value.value.slice(0, 1));
+                                        var y = changeTog(data.value.value.slice(1, 2));
+                                        var z = changeTog(data.value.value.slice(2, 3));
+                                        y = -y;
+
+                                        ball.x = _fix_pos(ball.x + x * 100,
+                                            (0 + ball.width / 2.0), (stageX - ball.width / 2.0));
+                                        ball.y = _fix_pos(ball.y + y * 100,
+                                            (0 + ball.height / 2.0), (stageY - ball.height / 2.0));
+                                        console.log("ball.x:" + ball.x + "ball.y:" + ball.y);
+                                    });
+                                }, function () {
+                                        alert("write to enable char error");
+                                    });
+                            }, function () {
+                                    alert("write to enable char error");
+                                });
+                        }, function () {
+                                alert("read SensorTag ATT table error!");
+                            });
+                    }, function () {
+                            alert("connect the SensorTag BC:6A:29:AB:7C:DE error");
+                    });
+                }
+            });
+
+            if (!BC.bluetooth.isopen) {
+                BC.Bluetooth.OpenBluetooth(function () {
+                    BC.Bluetooth.StartScan("LE");
+                });
+            } else {
+                BC.Bluetooth.StartScan("LE");
+            }
+        }, false);
     }
 
     private onResourceProgress(event:RES.ResourceEvent):void {
@@ -140,13 +156,13 @@ class Main extends egret.DisplayObjectContainer{
         var stageW: number = this.stage.stageWidth;
         var stageH: number = this.stage.stageHeight;
 
-        var icon:egret.Bitmap = this.createBitmapByName("ball");
-        icon.anchorX = icon.anchorY = 0.5;
-        this.addChild(icon);
-        icon.x = stageW / 2;
-        icon.y = stageH / 2 - 60;
-        icon.scaleX = 0.55;
-        icon.scaleY = 0.55;
+        ball = this.createBitmapByName("ball");
+        ball.anchorX = ball.anchorY = 0.5;
+        this.addChild(ball);
+        ball.x = stageW / 2;
+        ball.y = stageH / 2 - 60;
+        ball.scaleX = 0.55;
+        ball.scaleY = 0.55;
     }
 
     private createBitmapByName(name:string):egret.Bitmap {
